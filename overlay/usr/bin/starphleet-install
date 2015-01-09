@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ### Usage:
-###    starphleet-install
+###    install
 ### --help
 ###
 ### This will get starphleet on a base machine
@@ -21,17 +21,35 @@ rm -f /etc/init/starphleet*
 # then link everything back to here
 for overlay_file in $(find overlay/); do
   final_location=${overlay_file#overlay};
-  # skip directories, we'll create them as part of the file (paths) they contain
+  # skip directories, we'll create them as part of the file (paths) that are 
+  # contained within them
   [ -d ${overlay_file} ] && continue
   rm -rf ${final_location}
   mkdir -p $(dirname ${final_location});
-  ln -f -s $(pwd)/${overlay_file} ${final_location};
+  cp $(pwd)/${overlay_file} ${final_location};
 done
-
-exit
 
 #source again, yep -- now the environment is in place
 source overlay/usr/bin/tools
+
+#starphleet lives here
+mkdir -p ${STARPHLEET_TMP}
+mkdir -p ${STARPHLEET_ROOT}/diagnostic
+chmod -R 755 ${STARPHLEET_ROOT}
+
+#make a place for keys
+mkdir -p ${PRIVATE_KEYS}
+chmod 755 ${PRIVATE_KEYS}
+mkdir -p ${PUBLIC_KEYS}
+chmod 755 ${PUBLIC_KEYS}
+
+#force install private and public keys from local vagrant image
+if find /starphleet/private_keys/* > /dev/null ; then
+  [ -d "${PRIVATE_KEYS}" ] && cp /starphleet/private_keys/* "${PRIVATE_KEYS}"
+fi
+if find /starphleet/public_keys/* > /dev/null ; then
+  [ -d "${PUBLIC_KEYS}" ] && cp /starphleet/public_keys/* "${PUBLIC_KEYS}"
+fi
 
 #this is a provisioning script for the base system/host/vm
 #run as root, with the starphleet source tree at /starphleet
