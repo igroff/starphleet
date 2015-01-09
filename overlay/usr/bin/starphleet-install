@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+### Usage:
+###    starphleet-install
+### --help
+###
+### This will get starphleet on a base machine
+source overlay/usr/bin/tools
+
+run_as_root_or_die
+
+#flush out caches, I know, I know -- but really if you don't do this
+#Linux would rather swap than let go
+sync && echo 3 > /proc/sys/vm/drop_caches
+
+ec2_mounts
+
+#put in the system overlay, gets all the files in place
+#for the starphleet jobs
+# first remove any old upstart scripts
+rm -f /etc/init/starphleet*
+# then link everything back to here
+for overlay_file in $(find overlay/); do
+  final_location=${overlay_file#overlay};
+  # skip directories, we'll create them as part of the file (paths) they contain
+  [ -d ${overlay_file} ] && continue
+  rm -rf ${final_location}
+  mkdir -p $(dirname ${final_location});
+  ln -f -s $(pwd)/${overlay_file} ${final_location};
+done
+
+exit
+
+#source again, yep -- now the environment is in place
+source overlay/usr/bin/tools
+
+#this is a provisioning script for the base system/host/vm
+#run as root, with the starphleet source tree at /starphleet
+
+starphleet-buildpacks
+
+#making base containers as needed, base container serves as the source for
+#and we clone the service container on top, the idea is the base container
+#can be re-used and thus improve build time
+starphleet-build-base-container
+
+starphleet-cleanup
+start starphleet
+announce *Welcome to Starphleet*

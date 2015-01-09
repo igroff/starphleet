@@ -1,29 +1,12 @@
-#!/usr/bin/env starphleet-launcher
-### Usage:
-###    starphleet-install
-### --help
-###
-### This will get starphleet on a base machine
-run_as_root_or_die
-
-
-#flush out caches, I know, I know -- but really if you don't do this
-#Linux would rather swap than let go
-sync && echo 3 > /proc/sys/vm/drop_caches
-
-ec2_mounts
-
-#put in the system overlay, gets all the files in place
-#for the starphleet jobs
-rm -f /etc/init/starphleet*
-cp -R ${DIR}/../overlay/* /
-cp -R ${DIR}/../nginx/* ${STARPHLEET_ROOT:-/var/starphleet}/nginx/
-
-#source again, yep -- now the environment is in place
-source ${DIR}/tools
+#!/usr/bin/env bash
+source overlay/usr/bin/tools
 
 #this is a provisioning script for the base system/host/vm
-#run as root, with the starphleet source tree at /starphleet
+#run as root from a cloned starphleet repository directory
+run_as_root_or_die
+
+# need to make sure she's not running
+stop starphleet
 
 #role account for folks acting as the admiral, do this really early
 #as it will provide the home directory
@@ -40,13 +23,10 @@ hostname "${SHIP}"
 echo "${SHIP}" > /etc/hostname
 echo "127.0.0.1 ${SHIP} localhost" > /etc/hosts
 
-
 #packages
 debconf-set-selections <<< "postfix postfix/mailname string '${SHIP}'"
 debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
 apt-get -y install --force-yes software-properties-common
-add-apt-repository -y ppa:chris-lea/node.js
-apt-get -y update
 
 # Run Upgrade before before installing packages - which fixes this error
 # https://github.com/lxc/lxc/issues/247
@@ -54,6 +34,7 @@ export DEBIAN_FRONTEND=noninteractive; apt-get dist-upgrade -y -o Dpkg::Options:
 
 apt-get -y install --force-yes $(< "${DIR}/packages")
 
+cp -R nginx/* ${STARPHLEET_ROOT:-/var/starphleet}/nginx
 pushd ${STARPHLEET_ROOT:-/var/starphleet}/nginx
 set -e
 make
@@ -64,23 +45,15 @@ popd
 rm /bin/sh
 ln /bin/bash /bin/sh
 
-
 #starphleet lives here
-[ -d ${STARPHLEET_ROOT} ] || mkdir -p ${STARPHLEET_ROOT}
-[ -d ${STARPHLEET_TMP} ] || mkdir -p ${STARPHLEET_TMP}
+mkdir -p ${STARPHLEET_ROOT}
+mkdir -p ${STARPHLEET_TMP}
 chmod 755 ${STARPHLEET_ROOT}
-[ -d ${STARPHLEET_ROOT}/diagnostic ] || mkdir -p ${STARPHLEET_ROOT}/diagnostic
+mkdir -p ${STARPHLEET_ROOT}/diagnostic
 chmod 755 ${STARPHLEET_ROOT}/diagnostic
 
 #starphleet and all of its scripts
 pushd "${DIR}/.."
-# npm is a jerk, and if a file exists that it tries to write it dies
-# this should all be removeed ( the npm install )and replaced with overlay
-# but since the whole thing is currently busted I want to get it working 
-# at all first
-rm /usr/bin/starphleet-launcher || true
-npm ${NPM_FLAGS} install -g
-popd
 
 #make a place for keys
 test -d ${PRIVATE_KEYS} || mkdir -p ${PRIVATE_KEYS}
@@ -95,7 +68,6 @@ if find /starphleet/public_keys/* > /dev/null ; then
   [ -d "${PUBLIC_KEYS}" ] && cp /starphleet/public_keys/* "${PUBLIC_KEYS}"
 fi
 
-
 #allow passwordless sudoers
 cat > ${ROOT}/etc/sudoers <<'EOF'
 Defaults	env_reset
@@ -108,14 +80,3 @@ vagrant ALL=NOPASSWD: ALL
 Defaults env_keep="sSH_AUTH_SOCK"
 Defaults !requiretty
 EOF
-
-starphleet-buildpacks
-
-#making base containers as needed, base container serves as the source for
-#and we clone the service container on top, the idea is the base container
-#can be re-used and thus improve build time
-${DIR}/starphleet-build-base-container
-
-starphleet-cleanup
-start starphleet
-announce *Welcome to Starphleet*
