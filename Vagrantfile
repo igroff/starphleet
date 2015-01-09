@@ -6,17 +6,17 @@ SHIP_NAME = 'ship'
 
 Vagrant::Config.run do |config|
 # Setup virtual machine box. This VM configuration code is always executed.
-  system "test -d private_keys || mkdir private_keys"
+  system "mkdir -p private_keys"
   system "test -n \"${STARPHLEET_PRIVATE_KEY}\" && cp \"${STARPHLEET_PRIVATE_KEY}\" \"private_keys/\""
-  system "test -d public_keys || mkdir public_keys"
+  system "mkdir -p public_keys"
   system "test -n \"${STARPHLEET_PUBLIC_KEY}\" && cp \"${STARPHLEET_PUBLIC_KEY}\" \"public_keys/\""
   system "test -n \"${STARPHLEET_HEADQUARTERS}\" && echo \"${STARPHLEET_HEADQUARTERS}\" > headquarters"
   config.vm.provision :shell, :inline => "
     test -d /hosthome/starphleet_dev/ && rm -rf /hosthome/starphleet_dev/;
-    export PATH=$PATH:/starphleet/scripts;
-    sudo cp /starphleet/scripts/starphleet-launcher /usr/bin;
-    sudo /starphleet/scripts/starphleet-install;
-    $([ -n \"#{ENV['STARPHLEET_HEADQUARTERS']}\" ] && starphleet-headquarters #{ENV['STARPHLEET_HEADQUARTERS']}) || true"
+    cd /starphleet;
+    sudo ./prep-ubuntu;
+    sudo ./install;
+    $([ -n \"#{ENV['STARPHLEET_HEADQUARTERS']}\" ] && starphleet-headquarters #{ENV['STARPHLEET_HEADQUARTERS']}) || true;"
 end
 
 Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|

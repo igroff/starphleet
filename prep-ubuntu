@@ -32,10 +32,11 @@ apt-get -y install --force-yes software-properties-common
 # https://github.com/lxc/lxc/issues/247
 export DEBIAN_FRONTEND=noninteractive; apt-get dist-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" --force-yes
 
-apt-get -y install --force-yes $(< "${DIR}/packages")
+apt-get -y install --force-yes $(< "overlay/usr/bin/packages")
 
-cp -R nginx/* ${STARPHLEET_ROOT:-/var/starphleet}/nginx
-pushd ${STARPHLEET_ROOT:-/var/starphleet}/nginx
+mkdir -p ${STARPHLEET_ROOT}/nginx
+cp -R nginx/* ${STARPHLEET_ROOT}/nginx
+pushd ${STARPHLEET_ROOT}/nginx
 set -e
 make
 set +e
@@ -44,29 +45,6 @@ popd
 #we will be using bash. period
 rm /bin/sh
 ln /bin/bash /bin/sh
-
-#starphleet lives here
-mkdir -p ${STARPHLEET_ROOT}
-mkdir -p ${STARPHLEET_TMP}
-chmod 755 ${STARPHLEET_ROOT}
-mkdir -p ${STARPHLEET_ROOT}/diagnostic
-chmod 755 ${STARPHLEET_ROOT}/diagnostic
-
-#starphleet and all of its scripts
-pushd "${DIR}/.."
-
-#make a place for keys
-test -d ${PRIVATE_KEYS} || mkdir -p ${PRIVATE_KEYS}
-chmod 755 ${PRIVATE_KEYS}
-test -d ${PUBLIC_KEYS} || mkdir -p ${PUBLIC_KEYS}
-chmod 755 ${PUBLIC_KEYS}
-#force install private and public keys from local vagrant image
-if find /starphleet/private_keys/* > /dev/null ; then
-  [ -d "${PRIVATE_KEYS}" ] && cp /starphleet/private_keys/* "${PRIVATE_KEYS}"
-fi
-if find /starphleet/public_keys/* > /dev/null ; then
-  [ -d "${PUBLIC_KEYS}" ] && cp /starphleet/public_keys/* "${PUBLIC_KEYS}"
-fi
 
 #allow passwordless sudoers
 cat > ${ROOT}/etc/sudoers <<'EOF'
