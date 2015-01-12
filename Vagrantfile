@@ -16,7 +16,7 @@ Vagrant::Config.run do |config|
     cd /starphleet;
     sudo ./prep-ubuntu;
     sudo ./install;
-    $([ -n \"#{ENV['STARPHLEET_HEADQUARTERS']}\" ] && starphleet-headquarters #{ENV['STARPHLEET_HEADQUARTERS']}) || true;"
+    $([ -n \"#{ENV['STARPHLEET_HEADQUARTERS']}\" ] && sudo starphleet-headquarters #{ENV['STARPHLEET_HEADQUARTERS']}) || true;"
 end
 
 Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|
