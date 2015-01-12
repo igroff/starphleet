@@ -1,0 +1,2 @@
+rework configuration so etc starphleet can actually override settings as opposed to be the sole source
+need ability to scrap container and build service from scratch
