@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env starphleet-launcher
 ### Usage:
 ###    starphleet-lxc-destroy <container_name>
 ### --help

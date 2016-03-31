@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env starphleet-launcher
 ### Usage:
 ###    starphleet-containermake [--run] <container_name> <build_script> [<base_container_name>]
 ### --help

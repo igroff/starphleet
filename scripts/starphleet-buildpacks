@@ -1,13 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env starphleet-launcher
 ### Usage:
 ###    starphleet-buildpacks
 ### --help
 ###
 ### This will install and update all the standard starphleet buildpacks.
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${DIR}/tools
-help=$(grep "^### " "$0" | cut -c 5-)
-eval "$(${DIR}/docopts -h "$help" -V "$version" : "$@")"
 
 [ -d "${BUILDPACKS}" ] && rm -rf "${BUILDPACKS}"
 mkdir -p "${BUILDPACKS}"
